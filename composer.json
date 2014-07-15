@@ -1,0 +1,20 @@
+{
+    "name": "oonix/encrypted-sessions",
+    "description": "Implementation of SessionHandlerInterface for encrypted sessions using the session ID as the key. Includes abstract class and a filesystem implementation.",
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Arran Schlosberg",
+            "email": "arran@oonix.com.au"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "Oonix\\": "src/"
+        }
+	}
+}
