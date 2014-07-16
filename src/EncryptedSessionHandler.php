@@ -177,7 +177,7 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 		 */
 		$strong = false;
 		$iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->_cipher), $strong);
-		if(!$strong && $this->_allow_weak_iv===true){
+		if(!$strong && $this->_allow_weak_iv!==true){
 			throw new EncryptedSessionException("A cryptographically weak algorithm was used in the generation of the initialisation vector.");
 		}
 		
