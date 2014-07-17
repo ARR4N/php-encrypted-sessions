@@ -1,6 +1,6 @@
 <?php
 
-namespace Oonix;
+namespace Oonix\Encryption\Sessions;
 
 /**
  * Encrypted Sessions
@@ -153,7 +153,7 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 * The ID is used as the secret key for HMAC derivation with $_entropy (see constructor) used as data.
 	 *
 	 * - First round HMAC returns raw data to be used as the key for openssl_[en|de]crypt()
-	 * - Secound round HMAC is base64 encoded, truncated to the standard 26 string-length and used as the storage key.
+	 * - Secound round HMAC is base64 encoded (alphanumeric characters only), truncated to the standard 26 string-length and used as the storage key.
 	 *
 	 * @param string $key	The session ID.
 	 * @access public
@@ -162,7 +162,7 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	private function convertID($id){
 		$enc = hash_hmac($this->_hash, $this->_entropy, $id, true);
 		$store = hash_hmac($this->_hash, $this->_entropy, $enc, true);
-		return array('enc' => $enc, 'store' => substr(base64_encode($store), 0, 26));
+		return array('enc' => $enc, 'store' => substr(preg_replace("/[^a-z0-9]/i", "", base64_encode($store)), 0, 26));
 	}
 	
 	/**
@@ -182,13 +182,8 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 		}
 		
 		$keys = $this->convertID($id);
-
-		$data = array(
-			'iv' => base64_encode($iv),
-			'data' => openssl_encrypt($data, $this->_cipher, $keys['enc'], 0, $iv)
-		);
-		
-		return $this->put($keys['store'], serialize($data));
+		$data = openssl_encrypt($data, $this->_cipher, $keys['enc'], OPENSSL_RAW_DATA, $iv);
+		return $this->put($keys['store'], $iv.$data);
 	}
 	
 	/**
@@ -199,9 +194,11 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 */
 	public function read($id){
 		$keys = $this->convertID($id);
-		$data = unserialize($this->get($keys['store']));
-		$iv = base64_decode($data['iv']);
-		return openssl_decrypt($data['data'], $this->_cipher, $keys['enc'], 0, $iv);
+		$raw = $this->get($keys['store']);
+		$len = openssl_cipher_iv_length($this->_cipher);
+		$iv = substr($raw, 0, $len);
+		$data = substr($raw, $len);
+		return openssl_decrypt($data, $this->_cipher, $keys['enc'], OPENSSL_RAW_DATA, $iv);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php
 
-namespace Oonix;
+namespace Oonix\Encryption\Sessions;
 
 class EncryptedSessionException extends \Exception{}
 
