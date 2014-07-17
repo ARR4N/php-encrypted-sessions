@@ -1,5 +1,7 @@
 <?php
 
+namespace Oonix\Encryption\Sessions;
+
 ini_set('display_errors', true);
 
 require "src/EncryptedSessionException.php";
@@ -7,7 +9,7 @@ require "src/EncryptedSessionHandler.php";
 require "src/EncryptedFileSession.php";
 
 //class to expose otherwise private data for the purpose of the demo
-class DemoSession extends Oonix\EncryptedFileSession {
+class DemoSession extends EncryptedFileSession {
 	private $storageKey;
 	
 	public function get($key){
@@ -29,7 +31,7 @@ try {
 	session_set_save_handler($handler);
 	session_start();
 }
-catch(Oonix\EncryptedSessionException $e){
+catch(EncryptedSessionException $e){
 	var_dump($e);
 }
 
