@@ -1,0 +1,64 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "5562595f433044ab068fea4d72c2795a",
+    "packages": [
+        {
+            "name": "oonix/encryption-utils",
+            "version": "v0.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/aschlosberg/php-encryption-utils.git",
+                "reference": "2b05770939605eb156b040c59d0c2fd9dbcdb01a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/aschlosberg/php-encryption-utils/zipball/2b05770939605eb156b040c59d0c2fd9dbcdb01a",
+                "reference": "2b05770939605eb156b040c59d0c2fd9dbcdb01a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/EncUtils.php",
+                    "src/EncryptException.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Arran Schlosberg",
+                    "email": "arran@oonix.com.au"
+                }
+            ],
+            "description": "Convenience wrapper for openssl_[en|de]crypt()",
+            "time": "2014-09-17 08:56:52"
+        }
+    ],
+    "packages-dev": [
+
+    ],
+    "aliases": [
+
+    ],
+    "minimum-stability": "stable",
+    "stability-flags": [
+
+    ],
+    "prefer-stable": false,
+    "platform": {
+        "php": ">=5.4.0"
+    },
+    "platform-dev": [
+
+    ]
+}

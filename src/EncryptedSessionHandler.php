@@ -15,12 +15,12 @@ namespace Oonix\Encryption\Sessions;
 abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	
 	/**
-	 * Cipher method to be used. See openssl_encrypt() for details.
-	 *
-	 * @var string
+	 * Wrapper object for encrypt / decrypt with automated HMAC authentication.
+	 * 
+	 * @var object
 	 * @access private
 	 */
-	private $_cipher;
+	private $_enc;
 	
 	/**
 	 * Hash function to use in determining the encryption and storage keys from the session ID. See EncryptedSessionHandler::convertKey() for details.
@@ -55,47 +55,29 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 * @access private
 	 */
 	protected $_name;
-	
-	/**
-	 * Should we allow the initialisation vector for the encryption to be derived from a cryptographically weak PRNG
-	 *
-	 * @var bool
-	 * @access private
-	 */
-	private $_allow_weak_iv;
 
 	/**
 	 * Constructor
 	 *
 	 * Store the configuration directives. Implements checks and then stores each in the equivalent private parameter.
 	 *
-	 * @param string $cipher			See attribute $_cipher.
-	 * @param string $hash				See attribute $_hash.
+	 * @param string $cipher			Passed to Oonix\Encryption\EncUtils object.
+	 * @param string $hash				See attribute $_hash. Additionally passed to Oonix\Encryption\EncUtils object for cipher text authentication.
 	 * @param string $entropy			See attribute $_entropy; must be at least 64 characters.
-	 * @param bool   $allow_weak_iv	See attribute $_allow_weak_iv.
+	 * @param bool   $allow_weak_rand	Passed to Oonix\Encryption\EncUtils object to determine strict requirement of cryptographically strong PRNG.
 	 * @access public
 	 */
-	public function __construct($cipher, $hash, $entropy, $allow_weak_iv = false){
-		if(!function_exists('openssl_encrypt')){
-			throw new EncryptedSessionException("OpenSSL encryption functions required.");
-		}
+	public function __construct($cipher, $hash, $entropy, $allow_weak_rand = false){
+		//we don't have the key just yet as it's generated from the session ID
+		$this->_enc = new \Oonix\Encryption\EncUtils("", $cipher, OPENSSL_RAW_DATA, $allow_weak_rand, $hash);
 		
-		if(!in_array($cipher, openssl_get_cipher_methods(true))){
-			throw new EncryptedSessionException("The cipher '{$cipher}' is not available. Use openssl_get_cipher_methods() for a list of available methods.");
-		}
-		$this->_cipher = $cipher;
-		
-		if(!in_array($hash, hash_algos())){
-			throw new EncryptedSessionException("The hash algorithm '{$hash}' is not available. Use hash_algos() for a list of available algorithms.");
-		}
+		//availability is checked by the EncUtils object
 		$this->_hash = $hash;
 		
 		if(strlen($entropy)<64){
 			throw new EncryptedSessionException("Please provide at least 64 characters of entropy.");
 		}
 		$this->_entropy = $entropy;
-		
-		$this->_allow_weak_iv = $allow_weak_iv===true;
 	}
 	
 	/**
@@ -155,7 +137,7 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 * - First round HMAC returns raw data to be used as the key for openssl_[en|de]crypt()
 	 * - Secound round HMAC is base64 encoded (alphanumeric characters only), truncated to the standard 26 string-length and used as the storage key.
 	 *
-	 * @param string $key	The session ID.
+	 * @param string $key		The session ID.
 	 * @access public
 	 * @return array			Encryption and storage keys.
 	 */
@@ -169,36 +151,22 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 * Implementation of SessionHandlerInterface::write()
 	 *
 	 * Convert the session ID into encryption and storage keys and pass encrypted data to EncryptedSessionHandler::put().
-	 * Initialisation vector and ciphertext are stored in a seralized array.
 	 */
 	public function write($id, $data){
-		/**
-		 * Generate an IV and ensure that requirements for a cryptographically strong algorithm are met.
-		 */
-		$strong = false;
-		$iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->_cipher), $strong);
-		if(!$strong && $this->_allow_weak_iv!==true){
-			throw new EncryptedSessionException("A cryptographically weak algorithm was used in the generation of the initialisation vector.");
-		}
-		
 		$keys = $this->convertID($id);
-		$data = openssl_encrypt($data, $this->_cipher, $keys['enc'], OPENSSL_RAW_DATA, $iv);
-		return $this->put($keys['store'], $iv.$data);
+		$this->_enc->config("key", $keys['enc']);
+		return $this->put($keys['store'], $this->_enc->encrypt($data));
 	}
 	
 	/**
 	 * Implementation of SessionHandlerInterface::read()
 	 *
 	 * Convert the session ID into encryption and storage keys and decrypt data from EncryptedSessionHandler::get().
-	 * Initialisation vector and ciphertext are stored in a seralized array.
 	 */
 	public function read($id){
 		$keys = $this->convertID($id);
-		$raw = $this->get($keys['store']);
-		$len = openssl_cipher_iv_length($this->_cipher);
-		$iv = substr($raw, 0, $len);
-		$data = substr($raw, $len);
-		return openssl_decrypt($data, $this->_cipher, $keys['enc'], OPENSSL_RAW_DATA, $iv);
+		$this->_enc->config("key", $keys['enc']);
+		return $this->_enc->decrypt($this->get($keys['store']));
 	}
 
 	/**
@@ -207,6 +175,6 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 * Convert the session ID into encryption and storage keys and pass the latter to EncryptedSessionHandler::remove().
 	 */
 	public function destroy($id){
-		return $this->remove($this->convertID($key)['file']);
+		return $this->remove($this->convertID($key)['store']);
 	}
 }

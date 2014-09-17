@@ -4,6 +4,9 @@ namespace Oonix\Encryption\Sessions;
 
 ini_set('display_errors', true);
 
+require "vendor/oonix/encryption-utils/src/EncUtils.php";
+require "vendor/oonix/encryption-utils/src/EncryptException.php";
+
 require "src/EncryptedSessionException.php";
 require "src/EncryptedSessionHandler.php";
 require "src/EncryptedFileSession.php";
