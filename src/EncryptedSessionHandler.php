@@ -1,6 +1,7 @@
 <?php
 
 namespace Oonix\Encryption\Sessions;
+use \Oonix\Encryption\EncUtils;
 
 /**
  * Encrypted Sessions
@@ -69,10 +70,11 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 */
 	public function __construct($cipher, $hash, $entropy, $allow_weak_rand = false){
 		//we don't have the key just yet as it's generated from the session ID
-		$this->_enc = new \Oonix\Encryption\EncUtils("", $cipher, OPENSSL_RAW_DATA, $allow_weak_rand, $hash);
+		$this->_enc = new EncUtils("", $cipher, OPENSSL_RAW_DATA, $allow_weak_rand, $hash);
 		
 		//availability is checked by the EncUtils object
 		$this->_hash = $hash;
+		
 		
 		if(strlen($entropy)<64){
 			throw new EncryptedSessionException("Please provide at least 64 characters of entropy.");
@@ -132,18 +134,15 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 * Derive encryption and session keys from the session ID.
 	 *
 	 * As the session ID is private it can additionally be used to encrypt the data at rest as long as the storage key does not reveal information as to the ID.
-	 * The ID is used as the secret key for HMAC derivation with $_entropy (see constructor) used as data.
-	 *
-	 * - First round HMAC returns raw data to be used as the key for openssl_[en|de]crypt()
-	 * - Secound round HMAC is base64 encoded (alphanumeric characters only), truncated to the standard 26 string-length and used as the storage key.
+	 * HKDF is utilised to derive two independent keys with the session ID as IKM.
 	 *
 	 * @param string $key		The session ID.
 	 * @access public
 	 * @return array			Encryption and storage keys.
 	 */
 	private function convertID($id){
-		$enc = hash_hmac($this->_hash, $this->_entropy, $id, true);
-		$store = hash_hmac($this->_hash, $this->_entropy, $enc, true);
+		$enc = EncUtils::hkdf($id, null, "Session_{$this->_name}_{$this->_save_path}_Encryption", $this->_entropy);
+		$store = EncUtils::hkdf($id, null, "Session_{$this->_name}_{$this->_save_path}_Storage", $this->_entropy);
 		return array('enc' => $enc, 'store' => substr(preg_replace("/[^a-z0-9]/i", "", base64_encode($store)), 0, 26));
 	}
 	

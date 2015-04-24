@@ -3,7 +3,7 @@
     "description": "Implementation of SessionHandlerInterface for encrypted sessions using the session ID as the key. Includes abstract class and a filesystem implementation.",
     "require": {
         "php": ">=5.4.0",
-        "oonix/encryption-utils": "0.1.*"
+        "oonix/encryption-utils": "^0.1.2"
     },
     "license": "GPL-3.0",
     "authors": [
