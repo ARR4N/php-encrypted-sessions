@@ -16,9 +16,9 @@ use \Oonix\Encryption\EncUtils;
 abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	
 	/**
-	 * Wrapper object for encrypt / decrypt with automated HMAC authentication.
+	 * Configuration details for the EncUtils object. It can only be constructed once the key is known.
 	 * 
-	 * @var object
+	 * @var string[]
 	 * @access private
 	 */
 	private $_enc;
@@ -70,7 +70,10 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 */
 	public function __construct($cipher, $hash, $entropy, $allow_weak_rand = false){
 		//we don't have the key just yet as it's generated from the session ID
-		$this->_enc = new EncUtils("", $cipher, OPENSSL_RAW_DATA, $allow_weak_rand, $hash);
+		$this->_enc = [];
+		foreach(['cipher', 'hash', 'allow_weak_rand'] as $key){
+		   $this->_enc[$key] = $$key;
+		}
 		
 		//availability is checked by the EncUtils object
 		$this->_hash = $hash;
@@ -147,14 +150,21 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	}
 	
 	/**
+	 * Return an EncUtils object with all configuration set.
+	 * @param string $key
+	 */
+	private function getEncUtil($key){
+	   return new EncUtils($key, $this->_enc['cipher'], OPENSSL_RAW_DATA, $this->_enc['allow_weak_rand'], $this->_enc['hash']);
+	}
+	
+	/**
 	 * Implementation of SessionHandlerInterface::write()
 	 *
 	 * Convert the session ID into encryption and storage keys and pass encrypted data to EncryptedSessionHandler::put().
 	 */
 	public function write($id, $data){
 		$keys = $this->convertID($id);
-		$this->_enc->config("key", $keys['enc']);
-		return $this->put($keys['store'], $this->_enc->encrypt($data));
+		return $this->put($keys['store'], $this->getEncUtil($keys['enc'])->encrypt($data));
 	}
 	
 	/**
@@ -164,8 +174,7 @@ abstract class EncryptedSessionHandler implements \SessionHandlerInterface {
 	 */
 	public function read($id){
 		$keys = $this->convertID($id);
-		$this->_enc->config("key", $keys['enc']);
-		return $this->_enc->decrypt($this->get($keys['store']));
+		return $this->getEncUtil($keys['enc'])->decrypt($this->get($keys['store']));
 	}
 
 	/**

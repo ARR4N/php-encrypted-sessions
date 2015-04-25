@@ -4,20 +4,20 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "cd9152b1790452ebb7a17e37366a26fd",
+    "hash": "05a70497345565a5dea57d3c761da14c",
     "packages": [
         {
             "name": "oonix/encryption-utils",
-            "version": "v0.1.2",
+            "version": "v0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aschlosberg/php-encryption-utils.git",
-                "reference": "bf1e4cf54384686866113d48c362db17dea61b54"
+                "reference": "62797c17382293409ba2c311d83a400e23fd77a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aschlosberg/php-encryption-utils/zipball/bf1e4cf54384686866113d48c362db17dea61b54",
-                "reference": "bf1e4cf54384686866113d48c362db17dea61b54",
+                "url": "https://api.github.com/repos/aschlosberg/php-encryption-utils/zipball/62797c17382293409ba2c311d83a400e23fd77a3",
+                "reference": "62797c17382293409ba2c311d83a400e23fd77a3",
                 "shasum": ""
             },
             "require": {
@@ -41,7 +41,7 @@
                 }
             ],
             "description": "Convenience wrapper for openssl_[en|de]crypt()",
-            "time": "2015-04-24 04:27:42"
+            "time": "2015-04-25 10:31:16"
         }
     ],
     "packages-dev": [],
